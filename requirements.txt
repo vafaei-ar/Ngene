@@ -1,0 +1,5 @@
+numpy>=1.15.1
+tensorflow>=1.8.0
+tensorboard>=1.8.0
+tqdm>=4.23.4
+
