@@ -8,9 +8,9 @@ import numpy as np
 import tensorflow as tf
 from .utils import ch_mkdir,the_print,StopWatch
 
-class ConvolutionalLayers(object):
+class Model(object):
     """
-    CLASS ConvolutionalLayers: This class provides you to define, train, restore and operate a sequential convolutional neural network.
+    CLASS Model: This class provides you to define, train, restore and operate a sequential convolutional neural network.
     
     --------
     METHODS:
@@ -38,7 +38,6 @@ class ConvolutionalLayers(object):
     |     data_provider: data provider class to feed CNN.
     |        training_epochs (default=1): number of training epochs.
     |        n_s (default=1): number of used image(s) in each epoch.
-    |        dropout (default=0.5): dropout.
     |        time_limit (default=None): time limit of training in minutes.
     
     |    Returns:
@@ -63,32 +62,37 @@ class ConvolutionalLayers(object):
     |        2D convolved image.
     
     """
-    def __init__(self,nx=276,ny=400,n_channel=1,n_class=1,restore=False,model_add='./model',arch_file_name=None):
+    def __init__(self,nx=276,ny=400,n_channel=1,n_class=1,restore=False,model_add='./model',arch=None):
 
         tf.reset_default_graph()
         self.model_add = model_add
         self.x_in = tf.placeholder(tf.float32,[None,nx,ny,n_channel])
         self.y_true = tf.placeholder(tf.float32,[None,nx,ny,n_class])
         self.learning_rate = tf.placeholder(tf.float32)
-        self.drop_out = tf.placeholder(tf.float32)
         self.nx = nx
         self.ny = ny
         self.n_class = n_class
         self.sw = StopWatch()
 
-        if arch_file_name is not None:
-            if arch_file_name[-3:]=='.py':
-                arch_file_name = arch_file_name[-3:]
-            exec('from '+arch_file_name+' import architecture', globals())
-            self.outputs = architecture(self.x_in, self.drop_out)
-            try:
-                os.remove(arch_file_name+'.pyc')
-            except:
-                pass
-            try:
-                shutil.rmtree('__pycache__')
-            except:
-                pass
+        if arch is not None:
+            if callable(arch):
+                self.outputs = arch(self.x_in)
+            elif isinstance(arch, str): 
+            
+                if arch[-3:]=='.py':
+                    arch = arch[-3:]
+                exec('from '+arch+' import architecture', globals())
+                self.outputs = architecture(self.x_in)
+                try:
+                    os.remove(arch+'.pyc')
+                except:
+                    pass
+                try:
+                    shutil.rmtree('__pycache__')
+                except:
+                    pass
+            else:
+                assert 0,'Architecture is not valid!'
 
             if type(self.outputs) is list:
                 self.x_out = self.outputs[0]
@@ -96,6 +100,8 @@ class ConvolutionalLayers(object):
                 self.x_out = self.outputs
         else:
             self.outputs = self.architecture()
+            
+        self.r_zeros = tf.nn.zero_fraction(self.x_out)
 
         self.cost = tf.reduce_sum(tf.pow(self.y_true - self.x_out, 2))
 #        self.cost = tf.losses.log_loss(self.y_true,self.x_out)
@@ -107,6 +113,7 @@ class ConvolutionalLayers(object):
         self.sess = tf.InteractiveSession()
         self.saver = tf.train.Saver()
 
+        self.init = tf.global_variables_initializer()
         if restore:
             try:
                 self.saver.restore(self.sess, model_add+'/model')
@@ -115,8 +122,7 @@ class ConvolutionalLayers(object):
                 print('Something is wrong, model can not be restored!')
                 exit()
         else:
-            init = tf.global_variables_initializer()
-            self.sess.run(init)
+            self.sess.run(self.init)
             
             # Initializing training properties
             self.training_time = [np.array([0,0,0,0,0])]
@@ -141,7 +147,6 @@ class ConvolutionalLayers(object):
         x = tf.layers.conv2d(x,filters=16,kernel_size=5,strides=(1, 1),padding='same',
                 activation=tf.nn.relu)
 
-        x = tf.layers.dropout(x, self.drop_out)
         self.x_out = tf.layers.conv2d(x,filters=3,kernel_size=5,strides=(1, 1),padding='same',
                 activation=tf.nn.relu)
         return self.x_out
@@ -151,9 +156,15 @@ class ConvolutionalLayers(object):
         self.saver.restore(self.sess, self.model_add+'/model')
 
     def train(self, data_provider,training_epochs = 1,iterations=10 ,n_s = 1,
-                    learning_rate = 0.001, dropout=0.5, time_limit=None, metric=None, verbose=0):
-    
-        self.sw.reset()
+                    learning_rate = 0.001, time_limit=None,
+                    metric=None, verbose=0,death_preliminary_check = 30,
+                    death_frequency_check = 1000, resuscitation_limit=100000):
+                         
+        counter = 0
+        death = self.total_iterations[-1]==0
+        not_dead = 0
+        n_resuscitation = 0
+        
         if time_limit is not None:
             import time
             t0 = time.time()
@@ -162,15 +173,38 @@ class ConvolutionalLayers(object):
                 # Loop over all batches
                 cc = 0
                 ii = 0
+                self.sw.reset()
                 for i in range(iterations):
                     while True:
                         xb,yb = data_provider(n_s)
                         if xb is not None:
                             break
                     # Run optimization op (backprop) and cost op (to get loss value)
-                    _, c = self.sess.run([self.optimizer, self.cost], feed_dict={self.x_in: xb, self.y_true: yb, self.drop_out: dropout, self.learning_rate: learning_rate})
+                    if death or (counter%death_frequency_check==0 and death_frequency_check):     
+                        rr,_, c = self.sess.run([self.r_zeros,self.optimizer, self.cost],
+                                                feed_dict={self.x_in: xb, self.y_true: yb,
+                                                self.learning_rate: learning_rate})
+                        if rr==1.:
+                            self.sess.run(self.init)
+                            not_dead = 0
+                            death = True
+                            if epoch%verbose==0:
+                                print('Warning! Dead model! Reinitiating...')
+                            n_resuscitation += 1
+                        else:
+                            not_dead += 1
+                        if not_dead>=death_preliminary_check:
+                            death = False
+                        if n_resuscitation>resuscitation_limit:
+                            assert 0,'Unsuccessful resuscitation, check the architecture.'
+                            
+                    else:
+                        _, c = self.sess.run([self.optimizer, self.cost],
+                                             feed_dict={self.x_in: xb, self.y_true: yb,
+                                             self.learning_rate: learning_rate})
+                    
                     cc += c
-                    ii += 1
+                    ii += 1                    
                     
                 self.training_time.append(self.training_time[-1]+self.sw())
                 self.total_iterations.append(iterations+self.total_iterations[-1])
@@ -201,7 +235,7 @@ class ConvolutionalLayers(object):
         np.save(self.model_add+'/properties',self.properties)
 
     def conv(self,x_in):
-        x_out = self.sess.run(self.x_out, feed_dict={self.x_in: x_in, self.drop_out: 1.})
+        x_out = self.sess.run(self.x_out, feed_dict={self.x_in: x_in})
         return x_out[0,:,:,:]
 
     def conv_large_image(self,xsm,pad=10,lx=276,ly=400):

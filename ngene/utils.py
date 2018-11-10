@@ -148,6 +148,10 @@ class StopWatch(object):
             res.append(value%un)
             value = int(value/un)
         return np.array(res[::-1])
+        
+    def array2sec(self,array):
+        conv = np.array([7*24*60*60,24*60*60,60*60,60,1])
+        return np.dot(conv,array)
 
     def __str__(self):
         res = self.interval()

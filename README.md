@@ -14,7 +14,7 @@ $ pip install -r requirements.txt
 ```
 Install the package using:
 ```
-$ cd deepsource
+$ cd Ngene
 
 $ python setup.py install
 ```

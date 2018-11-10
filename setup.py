@@ -29,7 +29,7 @@ setup(
     author='Alireza',
     url='https://github.com/vafaeiar/ngene',
     packages=find_packages(PACKAGE_PATH, "ngene"),
-    package_dir={'ngene': 'src'},
+    package_dir={'ngene': 'ngene'},
     include_package_data=True,
     install_requires=requires,
     license='MIT',
