@@ -17,7 +17,7 @@ class Model(object):
     
     __init__:
     |    Arguments:
-    |     nl (default=400): input layer size.
+    |     nl : input layer size.
     |     learning_rate (default=0.001): learning rate.
     |     n_channel (default=1): number of channels in input layer.
     |     restore (default=False): restore flag.
@@ -62,7 +62,7 @@ class Model(object):
     |        2D convolved image.
     
     """
-    def __init__(self,nx=276,ny=400,n_channel=1,n_class=1,restore=False,model_add='./model',arch=None):
+    def __init__(self,nx,ny,n_channel=1,n_class=1,restore=False,model_add='./model',arch=None):
 
         tf.reset_default_graph()
         self.model_add = model_add
@@ -92,10 +92,10 @@ class Model(object):
                 except:
                     pass
             else:
-                assert 0,'Architecture is not valid!'
+                assert 0,'Input architecture is not recognized!'
 
             if type(self.outputs) is list:
-                self.x_out = self.outputs[0]
+                self.x_out = self.outputs[-1]
             else:
                 self.x_out = self.outputs
         else:
