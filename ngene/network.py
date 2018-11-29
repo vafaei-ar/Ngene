@@ -268,8 +268,8 @@ class Model(object):
                         
 def slider(x,predict,lx=200,ly=200,pad=20):
     prm = np.zeros(x.shape)
-    li = xsm.shape[1]
-    lj = xsm.shape[2]
+    li = x.shape[1]
+    lj = x.shape[2]
     for i in np.arange(0,li,lx-2*pad):
         if i+lx<li:
             iii = i
