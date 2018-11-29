@@ -235,7 +235,7 @@ class Model(object):
         return x_out
 
     def conv_large_image(self,xsm,pad=10,lx=400,ly=400):
-        return slider(x,self.predict,lx=lx,ly=ly,pad=pad)
+        return slider(xsm,self.predict,lx=lx,ly=ly,pad=pad)
 
     def get_filters(self):
         filts = [str(i.name).split('/')[0] for i in tf.trainable_variables() if 'kernel' in i.name]    
