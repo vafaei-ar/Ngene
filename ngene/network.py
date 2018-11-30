@@ -202,13 +202,13 @@ class Model(object):
                     cc += c
                     ii += 1                    
                     
-                self.training_time.append(self.training_time[-1]+self.sw())
-                self.total_iterations.append(iterations+self.total_iterations[-1])
-                self.loss.append(cc/ii)
+                self.training_time = np.append(self.training_time,self.training_time[-1]+self.sw())
+                self.total_iterations = np.append(self.total_iterations,iterations+self.total_iterations[-1])
+                self.loss = np.append(self.loss,cc/ii)
                 if metric is None:
-                    self.metric.append(0)
+                    self.metric = np.append(self.metric,0)
                 else:
-                    self.metric.append(metric())
+                    self.metric = np.append(self.metric,metric())
                 
                 # Display loss per epoch step
                 if verbose:
