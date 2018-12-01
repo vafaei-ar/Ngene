@@ -105,7 +105,7 @@ class Model(object):
 #        self.cost = tf.reduce_sum(tf.pow(self.y_true - self.x_out, 2))
 #        self.cost = tf.losses.log_loss(self.y_true,self.x_out)
         if loss is None:
-            self.cost = tf.reduce_sum(tf.pow(self.y_true - self.x_out, 2))
+            self.cost = tf.reduce_mean(tf.pow(self.y_true - self.x_out, 2))
         else:
             self.cost = loss(self.y_true,self.x_out)
             
