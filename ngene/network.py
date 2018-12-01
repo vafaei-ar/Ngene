@@ -98,9 +98,9 @@ class Model(object):
             self.x_out = self.outputs
 
         if death_eval is None:
-            self.r_zeros = tf.nn.zero_fraction(self.x_out)
+            self.death = self.death_eval(self.x_out)
         else:
-            self.r_zeros = death_eval(self.x_out)
+            self.death = death_eval(self.x_out)
 
 #        self.cost = tf.reduce_sum(tf.pow(self.y_true - self.x_out, 2))
 #        self.cost = tf.losses.log_loss(self.y_true,self.x_out)
@@ -136,13 +136,18 @@ class Model(object):
             self.total_iterations = [0]
             self.loss = [0]
             self.metric = [0]
-            self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
+            self.properties = np.array([list(self.training_time),self.total_iterations,self.loss,self.metric],dtype=object)
             ch_mkdir(model_add)
             np.save(model_add+'/properties',self.properties)
 
     def restore(self):
         tf.reset_default_graph()
         self.saver.restore(self.sess, self.model_add+'/model')
+        
+    def death_eval(self,x):
+        mean, var = tf.nn.moments(tf.reshape(x, [-1]), axes=[0])
+        zero = tf.constant(0,dtype=var.dtype)
+        return tf.equal(var,zero)
 
     def train(self, data_provider = None,training_epochs = 1,iterations=10 ,n_s = 1,
                     learning_rate = 0.001, time_limit=None,
@@ -170,25 +175,29 @@ class Model(object):
                 cc = 0
                 ii = 0
                 self.sw.reset()
-                for i in range(iterations):
+                i = 0
+                while True:
                     while True:
                         xb,yb = data_provider(n_s)
                         if xb is not None:
                             break
                     # Run optimization op (backprop) and cost op (to get loss value)
                     if death or (counter%death_frequency_check==0 and death_frequency_check):     
-                        rr,_, c = self.sess.run([self.r_zeros,self.optimizer, self.cost],
+                        d,_, c = self.sess.run([self.death,self.optimizer, self.cost],
                                                 feed_dict={self.x_in: xb, self.y_true: yb,
                                                 self.learning_rate: learning_rate})
-                        if rr==1.:
+                        if d:
                             self.sess.run(self.init)
                             not_dead = 0
                             death = True
                             if epoch%verbose==0:
-                                print('Warning! Dead model! Reinitiating...')
+                                sys.stdout.write('\rWarning! Dead model! Reinitiating ({}/{})...'.format(n_resuscitation,resuscitation_limit))
+                                sys.stdout.flush()
                             n_resuscitation += 1
                         else:
                             not_dead += 1
+                            i += 1
+                            
                         if not_dead>=death_preliminary_check:
                             death = False
                         if n_resuscitation>resuscitation_limit:
@@ -198,11 +207,14 @@ class Model(object):
                         _, c = self.sess.run([self.optimizer, self.cost],
                                              feed_dict={self.x_in: xb, self.y_true: yb,
                                              self.learning_rate: learning_rate})
+                        i += 1
                     
                     cc += c
-                    ii += 1                    
+                    ii += 1  
+                    if i > iterations: 
+                        break             
                     
-                self.training_time = np.append(self.training_time,self.training_time[-1]+self.sw())
+                self.training_time = np.append(self.training_time,[self.training_time[-1]+self.sw()],axis=0)
                 self.total_iterations = np.append(self.total_iterations,iterations+self.total_iterations[-1])
                 self.loss = np.append(self.loss,cc/ii)
                 if metric is None:
@@ -220,14 +232,14 @@ class Model(object):
                         the_print("Time's up, goodbye!",tc='red',bgc='green')
                         ch_mkdir(self.model_add)
                         self.saver.save(self.sess, self.model_add+'/model')
-                        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
+                        self.properties = np.array([list(self.training_time),self.total_iterations,self.loss,self.metric],dtype=object)
                         np.save(self.model_add+'/properties',self.properties)
                         return 0
 
         # Creates a saver.
         ch_mkdir(self.model_add)
         self.saver.save(self.sess, self.model_add+'/model')
-        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
+        self.properties = np.array([list(self.training_time),self.total_iterations,self.loss,self.metric],dtype=object)
         np.save(self.model_add+'/properties',self.properties)
 
     def predict(self,x_in):
