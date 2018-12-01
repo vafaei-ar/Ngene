@@ -125,6 +125,10 @@ class Model(object):
             try:
                 self.saver.restore(self.sess, model_add+'/model')
                 [self.training_time,self.total_iterations,self.loss,self.metric] = np.load(model_add+'/properties.npy')
+                self.training_time = list(self.training_time)
+                self.total_iterations = list(self.total_iterations)
+                self.loss = list(self.loss)
+                self.metric = list(self.metric)
             except:
                 print('Something is wrong, model can not be restored!')
                 exit()
@@ -136,7 +140,7 @@ class Model(object):
             self.total_iterations = [0]
             self.loss = [0]
             self.metric = [0]
-            self.properties = np.array([list(self.training_time),self.total_iterations,self.loss,self.metric],dtype=object)
+            self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
             ch_mkdir(model_add)
             np.save(model_add+'/properties',self.properties)
 
@@ -194,6 +198,7 @@ class Model(object):
                                 sys.stdout.write('\rWarning! Dead model! Reinitiating ({}/{})...'.format(n_resuscitation,resuscitation_limit))
                                 sys.stdout.flush()
                             n_resuscitation += 1
+                            i += 1
                         else:
                             not_dead += 1
                             i += 1
@@ -214,13 +219,13 @@ class Model(object):
                     if i > iterations: 
                         break             
                     
-                self.training_time = np.append(self.training_time,[self.training_time[-1]+self.sw()],axis=0)
-                self.total_iterations = np.append(self.total_iterations,iterations+self.total_iterations[-1])
-                self.loss = np.append(self.loss,cc/ii)
+                self.training_time.append(self.training_time[-1]+self.sw())
+                self.total_iterations.append(iterations+self.total_iterations[-1])
+                self.loss.append(cc/ii)
                 if metric is None:
-                    self.metric = np.append(self.metric,0)
+                    self.metric.append(0)
                 else:
-                    self.metric = np.append(self.metric,metric())
+                    self.metric.append(metric())
                 
                 # Display loss per epoch step
                 if verbose:
@@ -232,14 +237,14 @@ class Model(object):
                         the_print("Time's up, goodbye!",tc='red',bgc='green')
                         ch_mkdir(self.model_add)
                         self.saver.save(self.sess, self.model_add+'/model')
-                        self.properties = np.array([list(self.training_time),self.total_iterations,self.loss,self.metric],dtype=object)
+                        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
                         np.save(self.model_add+'/properties',self.properties)
                         return 0
 
         # Creates a saver.
         ch_mkdir(self.model_add)
         self.saver.save(self.sess, self.model_add+'/model')
-        self.properties = np.array([list(self.training_time),self.total_iterations,self.loss,self.metric],dtype=object)
+        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
         np.save(self.model_add+'/properties',self.properties)
 
     def predict(self,x_in):
