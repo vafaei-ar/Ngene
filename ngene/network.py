@@ -124,7 +124,11 @@ class Model(object):
         if restore:
             try:
                 self.saver.restore(self.sess, model_add+'/model')
-                [self.training_time,self.total_iterations,self.loss,self.metric] = np.load(model_add+'/properties.npy')
+                try:
+                    probs = np.load(model_add+'/properties.npy')
+                except:
+                    probs = np.load(model_add+'/properties.npy',encoding='latin1')
+                [self.training_time,self.total_iterations,self.loss,self.metric] = probs
                 self.training_time = list(self.training_time)
                 self.total_iterations = list(self.total_iterations)
                 self.loss = list(self.loss)
