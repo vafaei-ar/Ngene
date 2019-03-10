@@ -124,17 +124,18 @@ class Model(object):
         if restore:
             try:
                 self.saver.restore(self.sess, model_add+'/model')
+                the_print('Model is restored!',style='bold',tc='blue',bgc='black')
                 try:
-                    probs = np.load(model_add+'/properties.npy')
+                    props = np.load(model_add+'/properties.npy')
                 except:
-                    probs = np.load(model_add+'/properties.npy',encoding='latin1')
-                [self.training_time,self.total_iterations,self.loss,self.metric] = probs
+                    props = np.load(model_add+'/properties.npy',encoding='latin1')
+                [self.training_time,self.total_iterations,self.loss,self.metric] = props
                 self.training_time = list(self.training_time)
                 self.total_iterations = list(self.total_iterations)
                 self.loss = list(self.loss)
                 self.metric = list(self.metric)
             except:
-                print('Something is wrong, model can not be restored!')
+                the_print('Something is wrong, model can not be restored!',style='bold',tc='red',bgc='black')
                 exit()
         else:
             self.sess.run(self.init)
@@ -151,6 +152,7 @@ class Model(object):
     def restore(self):
         tf.reset_default_graph()
         self.saver.restore(self.sess, self.model_add+'/model')
+        print("\033[91m Model is restored! \033[0m")
         
     def death_eval(self,x):
         mean, var = tf.nn.moments(tf.reshape(x, [-1]), axes=[0])
