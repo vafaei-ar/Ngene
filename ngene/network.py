@@ -126,9 +126,9 @@ class Model(object):
                 self.saver.restore(self.sess, model_add+'/model')
                 the_print('Model is restored!',style='bold',tc='blue',bgc='black')
                 try:
-                    props = np.load(model_add+'/properties.npy')
+                    props = np.load(model_add+'/properties.npy',allow_pickle=1)
                 except:
-                    props = np.load(model_add+'/properties.npy',encoding='latin1')
+                    props = np.load(model_add+'/properties.npy',encoding='latin1',allow_pickle=1)
                 [self.training_time,self.total_iterations,self.loss,self.metric] = props
                 self.training_time = list(self.training_time)
                 self.total_iterations = list(self.total_iterations)
