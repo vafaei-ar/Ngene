@@ -297,7 +297,7 @@ def slider(x,predict,lx=200,ly=200,pad=20):
     prm = np.zeros(x.shape)
     li = x.shape[1]
     lj = x.shape[2]
-    for i in np.arange(0,li,lx-2*pad):
+    for i in np.arange(0,li,int(lx-2*pad)):
         if i+lx<li:
             iii = i
             iei = i+lx
@@ -305,7 +305,7 @@ def slider(x,predict,lx=200,ly=200,pad=20):
             iii = li-lx
             iei = li
 
-        for j in np.arange(0,lj,ly-2*pad):
+        for j in np.arange(0,lj,int(ly-2*pad)):
             if j+ly<lj:
                 jii = j
                 jei = j+ly
