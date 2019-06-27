@@ -101,18 +101,21 @@ def standard(X):
 	return X
 
 def ch_mkdir(directory):
-	"""
-	ch_mkdir : This function creates a directory if it does not exist.
-	
-	Arguments:
-		directory (string): Path to the directory.
-		
-	--------
-	Returns:
-		null.		
-	"""
-	if not os.path.exists(directory):
-		  os.makedirs(directory)
+    """
+    ch_mkdir : This function creates a directory if it does not exist.
+
+    Arguments:
+        directory (string): Path to the directory.
+
+    --------
+    Returns:
+        null.		
+    """
+    if not os.path.exists(directory):
+        try:
+            os.makedirs(directory)
+        except:
+            print('could not make the directory!')
 
 class StopWatch(object):
     

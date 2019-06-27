@@ -257,7 +257,11 @@ class Model(object):
         x_out = self.sess.run(self.x_out, feed_dict={self.x_in: x_in})
         return x_out
 
-    def conv_large_image(self,xsm,pad=10,lx=400,ly=400):
+    def conv_large_image(self,xsm,pad=10,lx=None,ly=None):
+        if lx is None:
+            ls = self.xshape[1]
+        if ly is None:
+            ly = self.xshape[2]
         return slider(xsm,self.predict,lx=lx,ly=ly,pad=pad)
 
     def get_filters(self):
