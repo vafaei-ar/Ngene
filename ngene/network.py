@@ -259,7 +259,7 @@ class Model(object):
 
     def conv_large_image(self,xsm,pad=10,lx=None,ly=None):
         if lx is None:
-            ls = self.xshape[1]
+            lx = self.xshape[1]
         if ly is None:
             ly = self.xshape[2]
         return slider(xsm,self.predict,lx=lx,ly=ly,pad=pad)
