@@ -122,21 +122,7 @@ class Model(object):
 
         self.init = tf.global_variables_initializer()
         if restore:
-            try:
-                self.saver.restore(self.sess, model_add+'/model')
-                the_print('Model is restored!',style='bold',tc='blue',bgc='black')
-                try:
-                    props = np.load(model_add+'/properties.npy',allow_pickle=1)
-                except:
-                    props = np.load(model_add+'/properties.npy',encoding='latin1',allow_pickle=1)
-                [self.training_time,self.total_iterations,self.loss,self.metric] = props
-                self.training_time = list(self.training_time)
-                self.total_iterations = list(self.total_iterations)
-                self.loss = list(self.loss)
-                self.metric = list(self.metric)
-            except:
-                the_print('Something is wrong, model can not be restored!',style='bold',tc='red',bgc='black')
-                exit()
+            self.full_restore()
         else:
             self.sess.run(self.init)
             
@@ -153,7 +139,24 @@ class Model(object):
         tf.reset_default_graph()
         self.saver.restore(self.sess, self.model_add+'/model')
         print("\033[91m Model is restored! \033[0m")
-        
+
+    def full_restore(self):
+        try:
+            self.saver.restore(self.sess, self.model_add+'/model')
+            the_print('Model is restored!',style='bold',tc='blue',bgc='black')
+            try:
+                props = np.load(self.model_add+'/properties.npy',allow_pickle=1)
+            except:
+                props = np.load(self.model_add+'/properties.npy',encoding='latin1',allow_pickle=1)
+            [self.training_time,self.total_iterations,self.loss,self.metric] = props
+            self.training_time = list(self.training_time)
+            self.total_iterations = list(self.total_iterations)
+            self.loss = list(self.loss)
+            self.metric = list(self.metric)
+        except:
+            the_print('Something is wrong, model can not be restored!',style='bold',tc='red',bgc='black')
+            exit()
+                        
     def death_eval(self,x):
         mean, var = tf.nn.moments(tf.reshape(x, [-1]), axes=[0])
         zero = tf.constant(0,dtype=var.dtype)
@@ -162,7 +165,7 @@ class Model(object):
     def train(self, data_provider = None,training_epochs = 1,iterations=10 ,n_s = 1,
                     learning_rate = 0.001, time_limit=None,
                     metric=None, verbose=0,death_preliminary_check = 30,
-                    death_frequency_check = 1000, resuscitation_limit=100000):
+                    death_frequency_check = 1000, resuscitation_limit=100000, reset=False):
                     
         if data_provider is None:
             data_provider = self.data_provider
@@ -197,7 +200,10 @@ class Model(object):
                                                 feed_dict={self.x_in: xb, self.y_true: yb,
                                                 self.learning_rate: learning_rate})
                         if d:
-                            self.sess.run(self.init)
+                            if reset:
+                                self.sess.run(self.init)
+                            else:
+                                self.full_restore()
                             not_dead = 0
                             death = True
                             if epoch%verbose==0:
