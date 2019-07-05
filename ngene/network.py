@@ -134,6 +134,12 @@ class Model(object):
             self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
             ch_mkdir(model_add)
             np.save(model_add+'/properties',self.properties)
+            
+    def save(self):
+        ch_mkdir(self.model_add)
+        self.saver.save(self.sess, self.model_add+'/model')
+        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
+        np.save(self.model_add+'/properties',self.properties)
 
     def restore(self):
         tf.reset_default_graph()
@@ -247,17 +253,19 @@ class Model(object):
                     t1 = time.time()
                     if (t1-t0)/60>time_limit:
                         the_print("Time's up, goodbye!",tc='red',bgc='green')
-                        ch_mkdir(self.model_add)
-                        self.saver.save(self.sess, self.model_add+'/model')
-                        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
-                        np.save(self.model_add+'/properties',self.properties)
+#                        ch_mkdir(self.model_add)
+#                        self.saver.save(self.sess, self.model_add+'/model')
+#                        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
+#                        np.save(self.model_add+'/properties',self.properties)
+                        self.save()
                         return 0
 
         # Creates a saver.
-        ch_mkdir(self.model_add)
-        self.saver.save(self.sess, self.model_add+'/model')
-        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
-        np.save(self.model_add+'/properties',self.properties)
+#        ch_mkdir(self.model_add)
+#        self.saver.save(self.sess, self.model_add+'/model')
+#        self.properties = np.array([self.training_time,self.total_iterations,self.loss,self.metric],dtype=object)
+#        np.save(self.model_add+'/properties',self.properties)
+        self.save()
 
     def predict(self,x_in):
         x_out = self.sess.run(self.x_out, feed_dict={self.x_in: x_in})
