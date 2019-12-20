@@ -6,9 +6,14 @@ import pylab as plt
 import ngene as ng
 from ngene.architectures.simple import architecture 
 import ccgpack as ccg
-import tensorflow as tf
 from tqdm import tqdm, trange
 from scipy.stats import ttest_ind
+
+try:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+except:
+    import tensorflow as tf
 
 cl = np.load('../data/cl_planck_lensed.npy')
 sfs = ccg.StochasticFieldSimulator(cl)

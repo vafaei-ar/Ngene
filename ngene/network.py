@@ -5,8 +5,13 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
-import tensorflow as tf
 from .utils import ch_mkdir,the_print,StopWatch
+
+try:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+except:
+    import tensorflow as tf
 
 class Model(object):
     """

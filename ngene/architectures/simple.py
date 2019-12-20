@@ -1,4 +1,8 @@
-import tensorflow as tf
+try:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+except:
+    import tensorflow as tf
 
 def conv_layer(x,scope,filters=12,kernel_size=5,norm=True,avtive=True):
     

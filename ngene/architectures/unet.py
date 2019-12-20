@@ -1,6 +1,11 @@
 import numpy as np
-import tensorflow as tf
 from collections import OrderedDict
+
+try:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+except:
+    import tensorflow as tf
 
 def conv2d(x,num_outputs,kernel_size,stride,padding='VALID',activation_fn=tf.nn.relu,trainable=True,scope=None):
     return tf.contrib.layers.conv2d(
