@@ -176,7 +176,7 @@ class Model(object):
     def train(self, data_provider = None,training_epochs = 1,iterations=10 ,n_s = 1,
                     learning_rate = 0.001, time_limit=None,
                     metric=None, verbose=0,death_preliminary_check = 30,
-                    death_frequency_check = 1000, resuscitation_limit=100000, reset=False):
+                    death_frequency_check = 1000, resuscitation_limit=100000, reset=True):
                     
         if data_provider is None:
             data_provider = self.data_provider
