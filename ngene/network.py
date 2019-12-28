@@ -78,6 +78,7 @@ class Model(object):
         self.y_true = tf.placeholder(tf.float32,[None]+list(y.shape[1:]))
         self.learning_rate = tf.placeholder(tf.float32)
         self.sw = StopWatch()
+        self.n_resuscitation = 0
 
         if callable(arch):
             self.outputs = arch(self.x_in)
@@ -188,7 +189,6 @@ class Model(object):
         counter = 0
         death = self.total_iterations[-1]==0
         not_dead = 0
-        n_resuscitation = 0
         
         if time_limit is not None:
             import time
@@ -207,7 +207,7 @@ class Model(object):
                             break
                     # Run optimization op (backprop) and cost op (to get loss value)
                     if death or (counter%death_frequency_check==0 and death_frequency_check):     
-                        d,_, c = self.sess.run([self.death,self.optimizer, self.cost],
+                        d,_,c = self.sess.run([self.death,self.optimizer, self.cost],
                                                 feed_dict={self.x_in: xb, self.y_true: yb,
                                                 self.learning_rate: learning_rate})
                         if d:
@@ -218,9 +218,9 @@ class Model(object):
                             not_dead = 0
                             death = True
                             if epoch%verbose==0:
-                                sys.stdout.write('\rWarning! Dead model! Reinitiating ({}/{})...'.format(n_resuscitation,resuscitation_limit))
+                                sys.stdout.write('\rWarning! Dead model! Reinitiating ({}/{})...'.format(self.n_resuscitation,resuscitation_limit))
                                 sys.stdout.flush()
-                            n_resuscitation += 1
+                            self.n_resuscitation += 1
                             i += 1
                         else:
                             not_dead += 1
@@ -228,7 +228,7 @@ class Model(object):
                             
                         if not_dead>=death_preliminary_check:
                             death = False
-                        if n_resuscitation>resuscitation_limit:
+                        if self.n_resuscitation>resuscitation_limit:
                             assert 0,'Unsuccessful resuscitation, check the architecture.'
                             
                     else:
