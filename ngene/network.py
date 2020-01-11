@@ -314,7 +314,7 @@ class Model(object):
                         
 def slider(x,predict,pred_shape,lx=200,ly=200,pad=20):
     nch = pred_shape[-1]
-    prm = np.zeros(list(x.shape[]:-1)+[nch])
+    prm = np.zeros(list(x.shape[:-1])+[nch])
     li = x.shape[1]
     lj = x.shape[2]
     for i in np.arange(0,li,int(lx-2*pad)):
