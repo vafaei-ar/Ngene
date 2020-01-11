@@ -281,7 +281,7 @@ class Model(object):
             lx = self.xshape[1]
         if ly is None:
             ly = self.xshape[2]
-        return slider(xsm,self.predict,lx=lx,ly=ly,pad=pad)
+        return slider(xsm,self.predict,self.yshape,lx=lx,ly=ly,pad=pad)
 
     def get_filters(self):
         filts = [str(i.name).split('/')[0] for i in tf.trainable_variables() if 'kernel' in i.name]    
@@ -312,8 +312,9 @@ class Model(object):
         return self.x_out
         
                         
-def slider(x,predict,lx=200,ly=200,pad=20):
-    prm = np.zeros(x.shape)
+def slider(x,predict,pred_shape,lx=200,ly=200,pad=20):
+    nch = pred_shape[-1]
+    prm = np.zeros(list(x.shape[]:-1)+[nch])
     li = x.shape[1]
     lj = x.shape[2]
     for i in np.arange(0,li,int(lx-2*pad)):
